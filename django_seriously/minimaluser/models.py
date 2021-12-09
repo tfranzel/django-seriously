@@ -37,7 +37,9 @@ class UserManager(DjangoUserManager):
 class MinimalAbstractUser(AbstractBaseUser, PermissionsMixin):
     """
     An abstract base class implementing a fully featured User model with
-    admin-compliant permissions. Slight adaptation from Django version
+    admin-compliant permissions. Slight adaptation from Django version.
+
+    Subclass (and optionally adapt) this model in your main app.
     """
 
     email = models.EmailField(
