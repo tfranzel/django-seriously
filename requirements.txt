@@ -1,0 +1,3 @@
+-r requirements/base.txt
+-r requirements/dev.txt
+-r requirements/packaging.txt
