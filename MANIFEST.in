@@ -1,0 +1,8 @@
+include *.rst
+include LICENSE
+include django_seriously/py.typed
+include runtests.py
+graft tests
+graft requirements
+global-exclude __pycache__
+global-exclude *.py[co]
