@@ -1,34 +1,25 @@
+import base64
+import uuid
+from typing import TYPE_CHECKING, Optional
+
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
+from rest_framework.permissions import BasePermission
+
+from django_seriously.settings import seriously_settings
+
+if TYPE_CHECKING:
+    from django_seriously.authtoken.models import Token
 
 
 class TokenAuthentication(BaseAuthentication):
     """
-    Simple token based authentication.
-
-    Clients should authenticate by passing the token key in the "Authorization"
-    HTTP header, prepended with the string "Token ".  For example:
-
-        Authorization: Token 401f7ac837da42b97f613d789819ff93537bee6a
+    TODO
     """
 
-    keyword = "Token"
-    model = None
-
-    def get_model(self):
-        if self.model is not None:
-            return self.model
-        from rest_framework.authtoken.models import Token
-
-        return Token
-
-    """
-    A custom token model may be used, but must have the following properties.
-
-    * key -- The string identifying the token
-    * user -- The user to which the token belongs
-    """
+    keyword = "Bearer"
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
@@ -44,26 +35,66 @@ class TokenAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed(msg)
 
         try:
-            token = auth[1].decode()
+            token_str = auth[1].decode()
         except UnicodeError:
             msg = _(
                 "Invalid token header. Token string should not contain invalid characters."
             )
             raise exceptions.AuthenticationFailed(msg)
 
-        return self.authenticate_credentials(token)
+        return self.authenticate_credentials(token_str)
 
-    def authenticate_credentials(self, key):
-        model = self.get_model()
+    def authenticate_credentials(self, token_str):
+        model = seriously_settings.AUTH_TOKEN_MODEL
+
         try:
-            token = model.objects.select_related("user").get(key=key)
+            token_bytes = base64.urlsafe_b64decode(token_str)
+            if len(token_bytes) != 32:
+                raise ValueError()
+            token_id = uuid.UUID(bytes=token_bytes[:16], version=4)
+            raw_token = token_bytes[16:]
+        except ValueError:
+            raise exceptions.AuthenticationFailed(_("Invalid token."))
+
+        try:
+            token: "Token" = model.objects.select_related("user").get(id=token_id)
         except model.DoesNotExist:
+            raise exceptions.AuthenticationFailed(_("Invalid token."))
+
+        if not check_password(password=raw_token, encoded=token.key):  # type: ignore
             raise exceptions.AuthenticationFailed(_("Invalid token."))
 
         if not token.user.is_active:
             raise exceptions.AuthenticationFailed(_("User inactive or deleted."))
 
-        return (token.user, token)
+        return token.user, token
 
     def authenticate_header(self, request):
         return self.keyword
+
+
+class TokenHasScope(BasePermission):
+    """Derived from django-oauth-toolkit's TokenHasScope"""
+
+    def has_permission(self, request, view):
+        token: Optional["Token"] = request.auth
+
+        if not token:
+            return False
+
+        if hasattr(token, "scope"):
+            required_scopes = self.get_scopes(request, view)
+            return all(r in token.scope_list for r in required_scopes)
+
+        assert False, (
+            "TokenHasScope requires the`django_seriously.authtoken.TokenAuthentication` "
+            "authentication class to be used."
+        )
+
+    def get_scopes(self, request, view):
+        try:
+            return getattr(view, "required_scopes")
+        except AttributeError:
+            raise ImproperlyConfigured(
+                "TokenHasScope requires the view to define the required_scopes attribute"
+            )
