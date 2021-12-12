@@ -2,6 +2,7 @@ import base64
 import uuid
 from typing import TYPE_CHECKING, Optional
 
+from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 
 class TokenAuthentication(BaseAuthentication):
     """
-    TODO
+    Authentication method that works in tandem with Token.
     """
 
     keyword = "Bearer"
@@ -82,7 +83,7 @@ class TokenHasScope(BasePermission):
         if not token:
             return False
 
-        if hasattr(token, "scope"):
+        if hasattr(token, "scopes"):
             required_scopes = self.get_scopes(request, view)
             return all(r in token.scope_list for r in required_scopes)
 
