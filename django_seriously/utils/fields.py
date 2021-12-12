@@ -11,24 +11,24 @@ class ValidatedJSONField(models.JSONField):
     is only used for validation on save.
     """
 
-    def __init__(self, type, **kwargs):
-        self._type = type
+    def __init__(self, structure, **kwargs):
+        self._structure = structure
         kwargs.setdefault("encoder", DjangoJSONEncoder)
         super().__init__(**kwargs)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
-        kwargs["type"] = None
+        kwargs["structure"] = None
         return name, path, args, kwargs
 
     def validate(self, value, model_instance):
         super(models.JSONField, self).validate(value, model_instance)
         try:
             if isinstance(value, (str, bytes)):
-                pydantic.parse_raw_as(self._type, value)
+                pydantic.parse_raw_as(self._structure, value)
             else:
-                pydantic.parse_obj_as(self._type, value)
+                pydantic.parse_obj_as(self._structure, value)
         except pydantic.ValidationError as e:
             raise exceptions.ValidationError(
-                f"Invalid type structure structure for {self._type}: {e}",
+                f"Invalid type structure for {self._structure}: {e}",
             )
