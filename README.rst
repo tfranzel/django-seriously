@@ -16,7 +16,7 @@ Opinionated collection of `Django`_ and `Django REST framework`_ tools that came
 
 - ``MinimalUser`` (abstract model)
     - Bare minimum user model ready for customization.
-    - Removes the username and auxiliary fields like `first_name` `last_name`.
+    - Removes the username and auxiliary fields like ``first_name`` and ``last_name``.
     - Allow creating users without a valid password (unusable password)
     - Abstract since its highly recommended to subclass the user model anyway.
 
@@ -28,12 +28,15 @@ Opinionated collection of `Django`_ and `Django REST framework`_ tools that came
       `django-rest-knox`_ does not quite fit the permissioning.
     - No plain passwords in database (PBKDF2, i.e. hashed and salted)
     - Enabled for permission scoping
-    - Easy token creation in Django admin
+    - Easy (one-time-view) token creation in Django admin
 
 - ``BaseModel`` (abstract model)
     - Reusable base model with automatic ``created_at``, ``updated_at`` fields.
     - Primary key is a random UUID (``uuid4``).
     - Ensure validation logic (``full_clean()``) always runs, not just in a subset of cases.
+
+- ``AppSettings``
+    - A settings container with defaults and string importing inspired by DRF's ``APISettings``
 
 
 License
@@ -59,7 +62,54 @@ Installation
 Usage
 -----
 
-TODO
+``AdminItemAction``
+^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+    # admin.py
+    from django_seriously.utils.admin import AdminItemAction
+
+
+    class UserAdminAction(AdminItemAction[User]):
+        model_cls = User
+        actions = [
+            ("reset_invitation", "Reset Invitation"),
+        ]
+
+        @classmethod
+        def is_actionable(cls, obj: User, action: str) -> bool:
+            # check whether action should be shown for this item
+            if action == "reset_invitation":
+                return is_user_resettable_check(obj) # your code
+            return False
+
+        def perform_action(self, obj: User, action: str) -> Any:
+            # perform the action on the item
+            if action == "reset_invitation":
+                perform_your_resetting(obj)  # your code
+                obj.save()
+
+
+    @admin.register(User)
+    class UserAdmin(ModelAdmin):
+        # insert item actions into a list view column
+        list_display = (..., "admin_actions")
+
+        def admin_actions(self, obj: User):
+            return UserAdminAction.action_markup(obj)
+
+.. code:: python
+
+    # urls.py
+    from django_seriously.utils.admin import AdminItemAction
+
+    urlpatterns = [
+        ...
+        # item actions must precede regular admin endpoints
+        path("admin/", include(AdminItemAction.paths())),
+        path("admin/", admin.site.urls),
+    ]
 
 
 .. _Django: https://www.djangoproject.com/

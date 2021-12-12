@@ -115,8 +115,8 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
         """returns a urlpattern for registration in settings"""
         return path(
             route=(
-                f"serious-item-actions/{cls.model_cls.__name__.lower()}/<uuid:id>/"
-                f"{cls.__name__.lower()}/<str:action>/"
+                f"{cls.model_cls._meta.app_label}/{cls.model_cls.__name__.lower()}/"
+                f"<uuid:id>/{cls.__name__.lower()}/<str:action>/"
             ),
             view=cls.as_view(),
             name=cls.__name__.lower(),
