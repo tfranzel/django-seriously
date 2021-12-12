@@ -10,7 +10,7 @@ from django_seriously.authtoken.utils import generate_token
 class TokenAdmin(ModelAdmin):
     list_display = (
         "id",
-        "associated_entity",
+        "user",
         "name",
         "scopes",
     )
