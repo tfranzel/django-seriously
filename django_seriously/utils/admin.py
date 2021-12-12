@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import AccessMixin
 from django.db import models, transaction
 from django.http.response import HttpResponse, JsonResponse
 from django.urls.base import reverse
-from django.urls.conf import path
+from django.urls.conf import path, include
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -123,8 +123,8 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
         )
 
     @classmethod
-    def paths(cls):
-        return [item._path() for item in cls._registry]
+    def urls(cls):
+        return include([item._path() for item in cls._registry])
 
 
 def admin_navigation_link(

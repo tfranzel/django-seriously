@@ -107,7 +107,7 @@ Usage
     urlpatterns = [
         ...
         # item actions must precede regular admin endpoints
-        path("admin/", include(AdminItemAction.paths())),
+        path("admin/", AdminItemAction.urls()),
         path("admin/", admin.site.urls),
     ]
 
