@@ -2,7 +2,7 @@
 django-seriously
 ================
 
-|pypi-version|
+|build-status| |pypi-version|
 
     ... wait what? no seriously, why isn't that part of Django/DRF?
 
@@ -118,3 +118,5 @@ Usage
 
 .. |pypi-version| image:: https://img.shields.io/pypi/v/django-seriously.svg
    :target: https://pypi.python.org/pypi/django-seriously
+.. |build-status| image:: https://github.com/tfranzel/django-seriously/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/tfranzel/django-seriously/actions/workflows/ci.yml

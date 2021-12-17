@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 from django.utils.module_loading import import_string
 
@@ -30,7 +30,7 @@ class AppSettings:
         self.user_settings = user_settings
         self.defaults = defaults
         self.import_strings = import_strings
-        self._cached_attrs = set()
+        self._cached_attrs: Set[str] = set()
 
     def __getattr__(self, attr):
         if attr not in self.defaults:

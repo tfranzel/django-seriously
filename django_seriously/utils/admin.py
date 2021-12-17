@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import AccessMixin
 from django.db import models, transaction
 from django.http.response import HttpResponse, JsonResponse
 from django.urls.base import reverse
-from django.urls.conf import path, include
+from django.urls.conf import include, path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _

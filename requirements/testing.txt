@@ -1,5 +1,9 @@
 black>=21.12b0
-isort>=5.10.1
+pytest>=5.3.5
+pytest-django>=3.8.0
+pytest-cov>=2.8.1
+flake8>=3.7.9
+isort>=5.0.4
 mypy>=0.770
 django-stubs>=1.8.0
 djangorestframework-stubs>=1.1.0

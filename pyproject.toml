@@ -1,0 +1,15 @@
+[tool.black]
+target-version = ['py39']
+extend-exclude = 'migrations/.*'
+
+[tool.isort]
+profile = 'black'
+multi_line_output = 3
+skip_glob = "*/migrations/*"
+
+[tool.mypy]
+python_version = "3.9"
+plugins = "mypy_django_plugin.main,mypy_drf_plugin.main"
+
+[tool.django-stubs]
+django_settings_module = "tests.settings"
