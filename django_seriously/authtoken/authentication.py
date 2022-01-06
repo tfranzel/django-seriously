@@ -21,6 +21,12 @@ class TokenAuthentication(BaseAuthentication):
     """
 
     keyword = "Bearer"
+    model = None
+
+    def get_model(self):
+        if self.model is not None:
+            return self.model
+        return seriously_settings.AUTH_TOKEN_MODEL
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
@@ -46,7 +52,7 @@ class TokenAuthentication(BaseAuthentication):
         return self.authenticate_credentials(token_str)
 
     def authenticate_credentials(self, token_str):
-        model = seriously_settings.AUTH_TOKEN_MODEL
+        model = self.get_model()
 
         try:
             token_bytes = base64.urlsafe_b64decode(token_str)
