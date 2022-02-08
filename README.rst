@@ -63,7 +63,7 @@ Usage
 -----
 
 ``AdminItemAction``
-^^^^^^^^^^^^^^^^^^^
+===================
 
 .. code:: python
 

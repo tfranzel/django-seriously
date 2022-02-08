@@ -15,7 +15,6 @@ class TokenAdmin(ModelAdmin):
         "name",
         "scopes",
     )
-    readonly_fields = ("id",)
 
     def save_model(self, request, obj: Token, form, change):
         if not change:
@@ -30,6 +29,13 @@ class TokenAdmin(ModelAdmin):
             obj.id = token.id
             obj.key = token.key
         return super().save_model(request, obj, form, change)
+
+    def get_readonly_fields(self, request, obj=None):
+        if not obj:
+            # handle ReadOnlyPasswordHashWidget RO hack
+            return ("key",)
+        else:
+            return ("id", "created_at", "updated_at")
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == "key":

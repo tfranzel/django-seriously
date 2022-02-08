@@ -21,7 +21,7 @@ class Token(BaseModel):
         max_length=50,
         help_text=(
             f"comma-separated list of scopes. choices are "
-            f"{','.join(seriously_settings.AUTH_TOKEN_SCOPES)}."
+            f"{','.join(seriously_settings.AUTH_TOKEN_SCOPES) or 'n/a'}."
         ),
     )
 
@@ -44,6 +44,9 @@ class Token(BaseModel):
                 {"scopes": f"invalid scope choices. valid choices are: {valid_scopes}"}
             )
         self.scopes = ",".join(scopes)
+
+    def __str__(self):
+        return f"{self.name} ({self.user})"
 
     class Meta:
         abstract = "django_seriously.authtoken" not in settings.INSTALLED_APPS
