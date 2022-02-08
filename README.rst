@@ -64,7 +64,7 @@ Demo
 
 Showcasing ``AdminItemAction``, ``admin_navigation_link``, ``MinimalUser`` and ``TokenAuthentication``
 
-.. image:: https://github.com/tfranzel/drf-spectacular-sidecar/blob/master/docs/demo.gif
+.. image:: https://github.com/tfranzel/django-seriously/blob/master/docs/demo.gif
 
 Usage
 -----

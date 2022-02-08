@@ -31,7 +31,9 @@ class Token(BaseModel):
 
     def clean(self) -> None:
         super().clean()
-        if isinstance(self.scopes, (list, tuple)):
+        if not self.scopes:
+            scopes = []
+        elif isinstance(self.scopes, (list, tuple)):
             scopes = self.scopes
         elif isinstance(self.scopes, str):
             scopes = self.scopes.split(",")

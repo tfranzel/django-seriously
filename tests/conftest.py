@@ -51,6 +51,7 @@ def pytest_configure(config):
             "django.contrib.messages",
             "django.contrib.staticfiles",
             "rest_framework",
+            "django_seriously.authtoken",
             "tests",
         ),
         PASSWORD_HASHERS=(
