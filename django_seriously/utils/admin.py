@@ -127,9 +127,7 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
         return include([item._path() for item in cls._registry])
 
 
-def admin_navigation_link(
-    entity: models.Model, label: Optional[str] = None
-) -> str:
+def admin_navigation_link(entity: models.Model, label: Optional[str] = None) -> str:
     if not entity:
         return ""
 

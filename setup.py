@@ -94,6 +94,7 @@ setup(
         "Environment :: Web Environment",
         "Framework :: Django",
         "Framework :: Django :: 3.2",
+        "Framework :: Django :: 4.0",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",

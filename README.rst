@@ -59,6 +59,13 @@ Installation
     $ pip install django-seriously
 
 
+Demo
+----
+
+Showcasing ``AdminItemAction``, ``admin_navigation_link``, ``MinimalUser`` and ``TokenAuthentication``
+
+.. image:: https://github.com/tfranzel/drf-spectacular-sidecar/blob/master/docs/demo.gif
+
 Usage
 -----
 
@@ -110,6 +117,71 @@ Usage
         path("admin/", AdminItemAction.urls()),
         path("admin/", admin.site.urls),
     ]
+
+
+``admin_navigation_link``
+=========================
+
+.. code:: python
+
+    # admin.py
+    from django_seriously.utils.admin import admin_navigation_link
+
+    @admin.register(Article)
+    class ArticleAdmin(ModelAdmin):
+        # insert item actions into a list view column
+        list_display = ('id', "name", "author_link")
+
+        def author_link(self, obj: Article):
+            return admin_navigation_link(obj.author, obj.author.name)
+
+
+``TokenAuthentication``
+=======================
+
+.. code:: python
+
+    # settings.py
+    INSTALLED_APPS = [
+        ...
+        # only required if auth token is not extended by you
+        'django_seriously.authtoken',
+        ...
+    ]
+
+    SERIOUSLY_SETTINGS = {
+        "AUTH_TOKEN_SCOPES": ["test-scope", "test-scope2"]
+    }
+
+    # views.py
+    from django_seriously.authtoken.authentication import TokenAuthentication, TokenHasScope
+
+    class TestViewSet(viewsets.ModelViewSet):
+        ...
+        permission_classes = [TokenHasScope]
+        authentication_classes = [TokenAuthentication]
+        required_scopes = ['test-scope']
+
+
+``MinimalUser``
+===============
+
+.. code:: python
+
+    # models.py
+    from django_seriously.minimaluser.models import MinimalAbstractUser
+    from django_seriously.utils.models import BaseModel
+
+    # BaseModel is optional but adds useful uuid, created_at, updated_at
+    class User(BaseModel, MinimalAbstractUser):
+        pass
+
+    # admin.py
+    from django_seriously.minimaluser.admin import MinimalUserAdmin
+
+    @admin.register(User)
+    class UserAdmin(MinimalUserAdmin):
+        pass
 
 
 .. _Django: https://www.djangoproject.com/
