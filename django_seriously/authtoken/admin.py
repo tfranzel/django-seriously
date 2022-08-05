@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
-from django.contrib.auth.forms import ReadOnlyPasswordHashWidget
 from django.utils.translation import gettext_lazy as _
 
+from django_seriously.authtoken.forms import TokenChangeForm
 from django_seriously.authtoken.models import Token
 from django_seriously.authtoken.utils import generate_token
 
@@ -15,6 +15,7 @@ class TokenAdmin(ModelAdmin):
         "name",
         "scopes",
     )
+    form = TokenChangeForm
 
     def save_model(self, request, obj: Token, form, change):
         if not change:
@@ -31,16 +32,7 @@ class TokenAdmin(ModelAdmin):
         return super().save_model(request, obj, form, change)
 
     def get_readonly_fields(self, request, obj=None):
-        if not obj:
-            # handle ReadOnlyPasswordHashWidget RO hack
-            return ("key",)
-        else:
-            return "id", "created_at", "updated_at"
-
-    def formfield_for_dbfield(self, db_field, **kwargs):
-        if db_field.name == "key":
-            kwargs["widget"] = ReadOnlyPasswordHashWidget
-        return super().formfield_for_dbfield(db_field, **kwargs)
+        return "id", "created_at", "updated_at"
 
 
 if "django_seriously.authtoken" in settings.INSTALLED_APPS:
