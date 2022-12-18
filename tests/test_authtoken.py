@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from django_seriously.authtoken.authentication import TokenAuthentication, TokenHasScope
 from django_seriously.authtoken.models import Token
-from django_seriously.authtoken.utils import TokenContainer, generate_token
+from django_seriously.authtoken.utils import generate_token
 
 
 class TestAPIView(APIView):

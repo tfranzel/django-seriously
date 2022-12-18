@@ -24,6 +24,7 @@ class Token(BaseModel):
             f"{','.join(seriously_settings.AUTH_TOKEN_SCOPES) or 'n/a'}."
         ),
     )
+    last_seen_at = models.DateTimeField(blank=True, null=True)
 
     @cached_property
     def scope_list(self):

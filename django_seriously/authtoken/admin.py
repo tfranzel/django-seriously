@@ -32,7 +32,7 @@ class TokenAdmin(ModelAdmin):
         return super().save_model(request, obj, form, change)
 
     def get_readonly_fields(self, request, obj=None):
-        return "id", "created_at", "updated_at"
+        return "id", "created_at", "updated_at", "last_seen_at"
 
 
 if "django_seriously.authtoken" in settings.INSTALLED_APPS:

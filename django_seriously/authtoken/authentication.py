@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ImproperlyConfigured
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
@@ -71,10 +72,20 @@ class TokenAuthentication(BaseAuthentication):
         if not check_password(password=raw_token, encoded=token.key):  # type: ignore
             raise exceptions.AuthenticationFailed(_("Invalid token."))
 
+        if not self.check_expiration(token):
+            raise exceptions.AuthenticationFailed(_("Invalid token."))
+
         if not token.user.is_active:
             raise exceptions.AuthenticationFailed(_("User inactive or deleted."))
 
+        token.last_seen_at = timezone.now()
+        token.save(update_fields=["last_seen_at"])
+
         return token.user, token
+
+    def check_expiration(self, token: "Token"):
+        """user method that handles expired tokens"""
+        return True
 
     def authenticate_header(self, request):
         return self.keyword
