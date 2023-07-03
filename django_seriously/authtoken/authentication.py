@@ -81,6 +81,10 @@ class TokenAuthentication(BaseAuthentication):
         token.last_seen_at = timezone.now()
         token.save(update_fields=["last_seen_at"])
 
+        if seriously_settings.CHECK_PASSWORD_REHASH(token.key):
+            token.key = seriously_settings.MAKE_PASSWORD(raw_token)
+            token.save(update_fields=["key"])
+
         return token.user, token
 
     def check_expiration(self, token: "Token"):

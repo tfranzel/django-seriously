@@ -2,7 +2,9 @@ import base64
 import os
 import uuid
 
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import get_hasher
+
+from django_seriously.settings import seriously_settings
 
 
 class TokenContainer:
@@ -35,7 +37,21 @@ def generate_token() -> TokenContainer:
     raw_bearer_token = token_id.bytes + secret
     return TokenContainer(
         id=token_id,
-        key=make_password(secret, hasher="pbkdf2_sha256"),  # type: ignore
+        key=seriously_settings.MAKE_PASSWORD(secret),
         bearer=raw_bearer_token,
         encoded_bearer=base64.urlsafe_b64encode(raw_bearer_token).decode(),
     )
+
+
+def make_password(password) -> str:
+    """Default hasher function used by seriously_settings.MAKE_PASSWORD"""
+    if not isinstance(password, (bytes, str)):
+        raise TypeError(
+            f"Password must be a string or bytes, got {type(password).__qualname__}."
+        )
+    hasher = get_hasher("pbkdf2_sha256")
+    return hasher.encode(password, hasher.salt(), iterations=1_000)  # type: ignore
+
+
+def check_password_rehash(raw_password: str) -> bool:
+    return not raw_password.startswith("pbkdf2_sha256$1000$")

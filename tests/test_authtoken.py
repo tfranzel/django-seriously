@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from django.contrib.auth.hashers import get_hasher
 from django.contrib.auth.models import User
 from django.urls import path
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +11,7 @@ from rest_framework.views import APIView
 
 from django_seriously.authtoken.authentication import TokenAuthentication, TokenHasScope
 from django_seriously.authtoken.models import Token
-from django_seriously.authtoken.utils import generate_token
+from django_seriously.authtoken.utils import generate_token, TokenContainer
 
 
 class TestAPIView(APIView):
@@ -36,7 +37,7 @@ urlpatterns = [
 ]
 
 
-def gen_token():
+def gen_token() -> tuple[Token, TokenContainer]:
     token_container = generate_token()
     token = Token.objects.create(
         id=token_container.id,
@@ -87,3 +88,57 @@ def test_scoped_token_auth():
         "/s/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}"
     )
     assert response.status_code == 200
+
+
+@pytest.mark.urls(__name__)
+@pytest.mark.django_db
+def test_token_rehash():
+    token, token_container = gen_token()
+
+    assert (
+        APIClient()
+        .get("/u/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}")
+        .status_code
+        == 200
+    )
+
+    token.refresh_from_db()
+    saved_key_original = token.key
+
+    def make_new_password(password) -> str:
+        hasher = get_hasher("pbkdf2_sha256")
+        return hasher.encode(password, hasher.salt(), iterations=5_000)  # type: ignore
+
+    def check_new_password_rehash(raw_password: str) -> bool:
+        return not raw_password.startswith("pbkdf2_sha256$5000$")
+
+    with mock.patch(
+        "django_seriously.settings.seriously_settings.CHECK_PASSWORD_REHASH",
+        check_new_password_rehash,
+    ), mock.patch(
+        "django_seriously.settings.seriously_settings.MAKE_PASSWORD", make_new_password
+    ):
+        assert (
+            APIClient()
+            .get("/u/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}")
+            .status_code
+            == 200
+        )
+
+        token.refresh_from_db()
+        saved_key_rehashed = token.key
+
+        assert (
+            APIClient()
+            .get("/u/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}")
+            .status_code
+            == 200
+        )
+
+        token.refresh_from_db()
+        saved_key_rehashed2 = token.key
+
+    assert saved_key_original.startswith("pbkdf2_sha256$1000$")
+    assert saved_key_rehashed.startswith("pbkdf2_sha256$5000$")
+    # no change in method, so nothing is supposed to change
+    assert saved_key_rehashed == saved_key_rehashed2
