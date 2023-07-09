@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Generic, Optional, Type, TypeVar
+from typing import Any, Generic, Optional, Type, TypeVar, Union
 
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin
@@ -7,6 +7,7 @@ from django.db import models, transaction
 from django.http.response import HttpResponse, JsonResponse
 from django.urls.base import reverse
 from django.urls.conf import include, path
+from django.utils.functional import Promise
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -80,7 +81,7 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
         )
 
     @classmethod
-    def _action(cls, obj: _T, action: str, label: str):
+    def _action(cls, obj: _T, action: str, label: Union[str, Promise]):
         """template rendering of action"""
         if not cls.is_actionable(obj, action):
             return ""
