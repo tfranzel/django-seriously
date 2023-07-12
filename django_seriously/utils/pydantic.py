@@ -1,6 +1,7 @@
 import json
 from typing import Any
 
+from django import VERSION as DJANGO_VERSION
 from django.core import exceptions
 from pydantic import BaseModel, ValidationError, parse_obj_as, parse_raw_as
 
@@ -32,7 +33,12 @@ def pydantic_dumps(structure, value: Any, *, json_dumps=None, encoder=None) -> s
             obj = value
         else:
             obj = _build_container(structure, json_dumps=json_dumps)(__root__=value)
-        return obj.json()
+
+        if DJANGO_VERSION < (4, 2):
+            return obj.json()
+        else:
+            obj = obj.dict()
+            return obj["__root__"] if "__root__" in obj else obj
     except ValidationError as e:
         raise exceptions.ValidationError(f"Invalid type structure for {structure}: {e}")
 
