@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Model
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
@@ -29,6 +30,9 @@ class TokenAuthentication(BaseAuthentication):
             return self.model
         return seriously_settings.AUTH_TOKEN_MODEL
 
+    def get_queryset(self):
+        return self.get_model().objects.select_related("user")
+
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
@@ -53,8 +57,6 @@ class TokenAuthentication(BaseAuthentication):
         return self.authenticate_credentials(token_str)
 
     def authenticate_credentials(self, token_str):
-        model = self.get_model()
-
         try:
             token_bytes = base64.urlsafe_b64decode(token_str)
             if len(token_bytes) != 32:
@@ -65,8 +67,8 @@ class TokenAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed(_("Invalid token."))
 
         try:
-            token: "Token" = model.objects.select_related("user").get(id=token_id)
-        except model.DoesNotExist:
+            token: "Token" = self.get_queryset().get(id=token_id)
+        except Model.DoesNotExist:
             raise exceptions.AuthenticationFailed(_("Invalid token."))
 
         if not check_password(password=raw_token, encoded=token.key):  # type: ignore
@@ -87,11 +89,11 @@ class TokenAuthentication(BaseAuthentication):
 
         return token.user, token
 
-    def check_expiration(self, token: "Token"):
+    def check_expiration(self, token: "Token") -> bool:
         """user method that handles expired tokens"""
         return True
 
-    def authenticate_header(self, request):
+    def authenticate_header(self, request) -> str:
         return self.keyword
 
 
