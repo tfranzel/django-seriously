@@ -3,8 +3,7 @@ import uuid
 from typing import TYPE_CHECKING, Optional
 
 from django.contrib.auth.hashers import check_password
-from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Model
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
@@ -68,7 +67,7 @@ class TokenAuthentication(BaseAuthentication):
 
         try:
             token: "Token" = self.get_queryset().get(id=token_id)
-        except Model.DoesNotExist:
+        except ObjectDoesNotExist:
             raise exceptions.AuthenticationFailed(_("Invalid token."))
 
         if not check_password(password=raw_token, encoded=token.key):  # type: ignore

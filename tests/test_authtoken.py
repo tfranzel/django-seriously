@@ -1,3 +1,6 @@
+import base64
+import os
+import uuid
 from unittest import mock
 
 import pytest
@@ -60,6 +63,30 @@ def test_token_auth():
         "/u/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}"
     )
     assert response.status_code == 200
+
+
+@pytest.mark.urls(__name__)
+@pytest.mark.django_db
+def test_unknown_token():
+    token_id = uuid.uuid4()
+    secret = os.urandom(16)
+    raw_bearer_token = token_id.bytes + secret
+    bearer = base64.urlsafe_b64encode(raw_bearer_token).decode()
+
+    response = APIClient().get("/u/", HTTP_AUTHORIZATION=f"Bearer {bearer}")
+    assert response.status_code == 401
+
+
+@pytest.mark.urls(__name__)
+@pytest.mark.django_db
+def test_known_id_invalid_secret():
+    _, token_container = gen_token()
+    secret = os.urandom(16)
+    raw_bearer_token = token_container.id.bytes + secret
+    bearer = base64.urlsafe_b64encode(raw_bearer_token).decode()
+
+    response = APIClient().get("/u/", HTTP_AUTHORIZATION=f"Bearer {bearer}")
+    assert response.status_code == 401
 
 
 @pytest.mark.urls(__name__)
