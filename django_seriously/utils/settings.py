@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Set
+from typing import Any, Set
 
 from django.utils.module_loading import import_string
 
@@ -23,9 +23,9 @@ class AppSettings:
 
     def __init__(
         self,
-        user_settings: Dict[str, Any],
-        defaults: Dict[str, Any],
-        import_strings: List[str],
+        user_settings: dict[str, Any],
+        defaults: dict[str, Any],
+        import_strings: list[str],
     ):
         self.user_settings = user_settings
         self.defaults = defaults

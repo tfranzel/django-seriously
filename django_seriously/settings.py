@@ -1,10 +1,10 @@
-from typing import Any, Dict
+from typing import Any
 
 from django.conf import settings
 
 from django_seriously.utils.settings import AppSettings
 
-DEFAULTS: Dict[str, Any] = {
+DEFAULTS: dict[str, Any] = {
     "AUTH_TOKEN_SCOPES": [],
     "AUTH_TOKEN_MODEL": "django_seriously.authtoken.models.Token",
     "MAKE_PASSWORD": "django_seriously.authtoken.utils.make_password",

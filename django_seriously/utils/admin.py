@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Generic, Optional, Type, TypeVar, Union
 
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin
@@ -30,7 +30,7 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
     convenience view for having a context sensitive button per item in the admin list view.
     """
 
-    _registry: List[Type["AdminItemAction"]] = []
+    _registry: list[Type["AdminItemAction"]] = []
     model_cls: _T
     successful_message = _("Action completed successfully")
     error_message = _("Action failed: {}")

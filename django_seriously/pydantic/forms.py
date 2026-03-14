@@ -1,25 +1,22 @@
 from django.core.exceptions import ValidationError
 from django.forms import JSONField
-from django.forms.fields import InvalidJSONInput, JSONString
+from django.forms.fields import CharField, InvalidJSONInput, JSONString
 
-from django_seriously.utils.pydantic import PydanticMixin
+from django_seriously.pydantic.mixin import PydanticMixin
 
 
-class PydanticJSONFormField(PydanticMixin, JSONField):
-    def __init__(
-        self,
-        structure,
-        encoder=None,
-        decoder=None,
-        json_loads=None,
-        json_dumps=None,
-        **kwargs,
-    ):
+class ValidatedJSONFormField(PydanticMixin, JSONField):
+    def __init__(self, structure, **kwargs):
         self.structure = structure
-        self.json_loads = json_loads
-        self.json_dumps = json_dumps
-        super().__init__(encoder=encoder, decoder=decoder, **kwargs)
+        super().__init__(**kwargs)
 
+    def prepare_value(self, value):
+        if isinstance(value, InvalidJSONInput):
+            return value
+        return self._dump_json(value, indent=2).decode()
+
+
+class PydanticJSONFormField(ValidatedJSONFormField):
     def to_python(self, value):
         if self.disabled:
             return value
@@ -29,9 +26,9 @@ class PydanticJSONFormField(PydanticMixin, JSONField):
             return value
         try:
             converted = self._loads(value)
-        except ValidationError:
+        except ValidationError as e:
             raise ValidationError(
-                self.error_messages["invalid"],
+                e.message,
                 code="invalid",
                 params={"value": value},
             )
@@ -50,14 +47,9 @@ class PydanticJSONFormField(PydanticMixin, JSONField):
         except ValidationError:
             return InvalidJSONInput(data)
 
-    def prepare_value(self, value):
-        if isinstance(value, InvalidJSONInput):
-            return value
-        return self._dumps(value)
-
     def has_changed(self, initial, data):
-        if super().has_changed(initial, data):
+        if CharField.has_changed(self, initial, data):
             return True
         # For purposes of seeing whether something has changed, True isn't the
         # same as 1 and the order of keys doesn't matter.
-        return self._dumps(initial) != self._dumps(self.to_python(data))
+        return self._dump_json(initial) != self._dump_json(self.to_python(data))

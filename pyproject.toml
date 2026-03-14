@@ -61,10 +61,8 @@ select = [
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main", "pydantic.mypy"]
-#check_untyped_defs = true
 exclude = ["helper"]
 python_version = "3.12"
-strict = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"

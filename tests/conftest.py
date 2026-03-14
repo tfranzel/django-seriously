@@ -50,15 +50,17 @@ def pytest_configure(config):
             "django.contrib.staticfiles",
             "rest_framework",
             "django_seriously.authtoken",
+            "drf_spectacular",
             "tests",
         ),
+        REST_FRAMEWORK={
+            "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+        },
         PASSWORD_HASHERS=(
-            "django.contrib.auth.hashers.SHA1PasswordHasher",
             "django.contrib.auth.hashers.PBKDF2PasswordHasher",
             "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
             "django.contrib.auth.hashers.BCryptPasswordHasher",
             "django.contrib.auth.hashers.MD5PasswordHasher",
-            "django.contrib.auth.hashers.CryptPasswordHasher",
         ),
         DEFAULT_AUTO_FIELD="django.db.models.AutoField",
         SILENCED_SYSTEM_CHECKS=[

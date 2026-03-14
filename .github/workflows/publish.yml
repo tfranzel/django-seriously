@@ -24,7 +24,7 @@ jobs:
 
     - name: Publish
       env:
-        UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        UV_PUBLISH_TOKEN: ${{ secrets.PYPI_PASSWORD }}
       run: |
         uv publish
         twine upload dist/*
