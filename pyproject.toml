@@ -1,15 +1,82 @@
-[tool.black]
-target-version = ['py39']
-extend-exclude = 'migrations/.*'
+[project]
+name = "django-seriously"
+version = "0.5.0"
+description = "Opinionated collection of Django and DRF tools that came in handy time and again."
+readme = "README.rst"
+authors = [
+    { name = "T. Franzel", email = "tfranzel@users.noreply.github.com" }
+]
+license = {text = "BSD-3-Clause"}
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.2",
+    "djangorestframework>=3.14.0",
+    "pydantic>=2.0",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+]
 
-[tool.isort]
-profile = 'black'
-multi_line_output = 3
-skip_glob = "*/migrations/*"
+[project.urls]
+Homepage = "https://github.com/tfranzel/django-seriously"
+Source = "https://github.com/tfranzel/django-seriously"
+
+[project.optional-dependencies]
+schema = ["drf-spectacular (>=0.27.0)"]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=5.2.9",
+    "djangorestframework-stubs>=3.16.8",
+    "drf-spectacular>=0.29.0",
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+    "pytest-django>=4.12.0",
+    "ruff>=0.15.5",
+]
+
+[tool.ruff]
+exclude = ["**/migrations/*"]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "I",
+    "F401",
+]
 
 [tool.mypy]
-python_version = "3.9"
-plugins = "mypy_django_plugin.main,mypy_drf_plugin.main"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main", "pydantic.mypy"]
+#check_untyped_defs = true
+exclude = ["helper"]
+python_version = "3.12"
+strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = ["no-untyped-def"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
+strict_model_abstract_attrs = false
+
+[tool.uv.build-backend]
+module-root = ""
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"

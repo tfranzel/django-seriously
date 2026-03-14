@@ -17,7 +17,7 @@ for env in envs:
     matrix.append(
         {
             "toxenv": env,
-            "python-version": f'{version.group("major")}.{version.group("minor")}',
+            "python-version": f"{version.group('major')}.{version.group('minor')}",
             "experimental": bool("master" in env),
         }
     )
