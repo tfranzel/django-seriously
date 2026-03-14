@@ -61,7 +61,7 @@ select = [
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main", "pydantic.mypy"]
-exclude = ["helper"]
+exclude = ["helper", "dist"]
 python_version = "3.12"
 
 [[tool.mypy.overrides]]

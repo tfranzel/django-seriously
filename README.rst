@@ -4,167 +4,144 @@ django-seriously
 
 |build-status| |pypi-version|
 
-    ... wait what? no seriously, why isn't that part of Django/DRF?
+    *... wait, why isn't this part of Django already?*
 
-Opinionated collection of `Django`_ and `Django REST framework`_ tools that came in handy time and again.
-
-- ``AdminItemAction``
-    - Allow triggering context-aware custom admin operations in model list views.
-
-- ``admin_navigation_link``
-    - Allow navigation from the admin list view to other related models via links.
-
-- ``MinimalUser`` (abstract model)
-    - Bare minimum user model ready for customization.
-    - Removes the username and auxiliary fields like ``first_name`` and ``last_name``.
-    - Allow creating users without a valid password (unusable password)
-    - Abstract since its highly recommended to subclass the user model anyway.
-
-- ``ValidatedJSONField`` (model field)
-    - validate the structure of JSON fields with Pydantic models.
-
-- ``TokenAuthentication``
-    - When OAuth2 adds too much complexity, DRF's TokenAuthentication is too simple, and
-      `django-rest-knox`_ does not quite fit the permissioning.
-    - No plain passwords in database (PBKDF2, i.e. hashed and salted)
-    - Enabled for permission scoping
-    - Easy (one-time-view) token creation in Django admin
-
-- ``BaseModel`` (abstract model)
-    - Reusable base model with automatic ``created_at``, ``updated_at`` fields.
-    - Primary key is a random UUID (``uuid4``).
-    - Ensure validation logic (``full_clean()``) always runs, not just in a subset of cases.
-
-- ``AppSettings``
-    - A settings container with defaults and string importing inspired by DRF's ``APISettings``
-
-
-License
--------
-
-Provided by `T. Franzel <https://github.com/tfranzel>`_, `Licensed under 3-Clause BSD <https://github.com/tfranzel/django-seriously/blob/master/LICENSE>`_.
-
-Requirements
-------------
-
--  Python >= 3.6
--  Django >= 3.0
--  Django REST Framework (optional)
-
-Installation
-------------
+A focused collection of `Django`_ and `Django REST framework`_ utilities that solve real,
+recurring problems — the kind you keep re-inventing or copy&pasting in every new project.
 
 .. code:: bash
 
     $ pip install django-seriously
 
 
-Demo
-----
+What's in the box
+-----------------
 
-Showcasing ``AdminItemAction``, ``admin_navigation_link``, ``MinimalUser`` and ``TokenAuthentication``
-
-.. image:: https://github.com/tfranzel/django-seriously/blob/master/docs/demo.gif
-
-Usage
------
-
-``AdminItemAction``
-===================
-
-.. code:: python
-
-    # admin.py
-    from django_seriously.utils.admin import AdminItemAction
+- `PydanticJSONField`_ — typed, validated JSON fields backed by Pydantic
+- `TokenAuthentication`_ — secure, scoped API tokens without the OAuth2 overhead
+- `BaseModel`_ — UUID PKs, timestamps, and guaranteed validation on every save
+- `MinimalUser`_ — email-only user model without the cruft
+- `AdminItemAction`_ — per-row action buttons in Django admin list views
+- `admin_navigation_link`_ — clickable links between related models in admin
 
 
-    class UserAdminAction(AdminItemAction[User]):
-        model_cls = User
-        actions = [
-            ("reset_invitation", "Reset Invitation"),
-        ]
-
-        @classmethod
-        def is_actionable(cls, obj: User, action: str) -> bool:
-            # check whether action should be shown for this item
-            if action == "reset_invitation":
-                return is_user_resettable_check(obj) # your code
-            return False
-
-        def perform_action(self, obj: User, action: str) -> Any:
-            # perform the action on the item
-            if action == "reset_invitation":
-                perform_your_resetting(obj)  # your code
-                obj.save()
+Features
+--------
 
 
-    @admin.register(User)
-    class UserAdmin(ModelAdmin):
-        # insert item actions into a list view column
-        list_display = (..., "admin_actions")
+.. _PydanticJSONField:
 
-        def admin_actions(self, obj: User):
-            return UserAdminAction.action_markup(obj)
+``PydanticJSONField`` / ``ValidatedJSONField``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Django's ``JSONField`` is a black box — anything goes in, no guarantees come out.
+These fields bring schema validation and automatic deserialization using Pydantic v2.
+
+- ``PydanticJSONField`` — validates *and* deserializes to a typed Pydantic model instance
+- ``ValidatedJSONField`` — validates structure but keeps the raw Python object
 
 .. code:: python
 
-    # urls.py
-    from django_seriously.utils.admin import AdminItemAction
+    from pydantic import BaseModel
+    from django_seriously.pydantic.fields import PydanticJSONField
 
-    urlpatterns = [
-        ...
-        # item actions must precede regular admin endpoints
-        path("admin/", AdminItemAction.urls()),
-        path("admin/", admin.site.urls),
-    ]
+    class Address(BaseModel):
+        street: str
+        city: str
+        zip_code: str
+
+    class Contact(models.Model):
+        address = PydanticJSONField(structure=Address)
+
+    # Validated and deserialized automatically — no manual parsing needed
+    contact = Contact.objects.get(pk=pk)
+    print(contact.address.city)  # 'Berlin'
+
+Works seamlessly in:
+
+- Django admin (pretty-printed JSON editor)
+- DRF serializers (auto-detected)
+- Form validation
+- Seamless integration with `drf-spectacular`_. OpenAPI3-compliant schemas for those validated JSON fields.
 
 
-``admin_navigation_link``
-=========================
-
-.. code:: python
-
-    # admin.py
-    from django_seriously.utils.admin import admin_navigation_link
-
-    @admin.register(Article)
-    class ArticleAdmin(ModelAdmin):
-        # insert item actions into a list view column
-        list_display = ('id', "name", "author_link")
-
-        def author_link(self, obj: Article):
-            return admin_navigation_link(obj.author, obj.author.name)
-
+.. _TokenAuthentication:
 
 ``TokenAuthentication``
-=======================
+~~~~~~~~~~~~~~~~~~~~~~~
+
+When dealing with OAuth2 is overkill, DRF's built-in token is just horrible, and
+`django-rest-knox`_ just doesn't fit your permissioning model.
+
+**Security:**
+
+- Tokens are never stored in plain text — only a PBKDF2 hash is saved
+- Bearer token format: ``base64(uuid + random_secret)`` — UUID for **fast** DB lookup, secret for verification
+- Optional: Scopes
+
+**Simple usage** (just authentication, no scopes):
+
+.. code:: python
+
+    from django_seriously.authtoken.authentication import TokenAuthentication
+
+    class ReportsViewSet(viewsets.ModelViewSet):
+        authentication_classes = [TokenAuthentication]
+        permission_classes = [IsAuthenticated]
+
+**With scope-based permissions:**
 
 .. code:: python
 
     # settings.py
-    INSTALLED_APPS = [
-        ...
-        # only required if auth token is not extended by you
-        'django_seriously.authtoken',
-        ...
-    ]
-
     SERIOUSLY_SETTINGS = {
-        "AUTH_TOKEN_SCOPES": ["test-scope", "test-scope2"]
+        "AUTH_TOKEN_SCOPES": ["read", "write", "admin"]
     }
 
     # views.py
     from django_seriously.authtoken.authentication import TokenAuthentication, TokenHasScope
 
-    class TestViewSet(viewsets.ModelViewSet):
-        ...
-        permission_classes = [TokenHasScope]
+    class ReportsViewSet(viewsets.ModelViewSet):
         authentication_classes = [TokenAuthentication]
-        required_scopes = ['test-scope']
+        permission_classes = [TokenHasScope]
+        required_scopes = ['read']
 
+**Admin integration:** tokens are shown once at creation (copy/paste), then stored only as hashes — just like a good secret manager.
+
+
+.. _BaseModel:
+
+``BaseModel``
+~~~~~~~~~~~~~
+
+The abstract base model you define in every new project, done properly.
+
+- **UUID primary key** (``uuid4``) — no sequential ID leakage
+- **Automatic timestamps** — immutable ``created_at``, auto-updating ``updated_at``
+- **Validation always runs** — overrides ``save()`` to call ``full_clean()`` every time, not just through forms/admin
+
+That last point matters: Django only runs model validation in forms and the admin by default. Direct ``.save()`` calls silently skip your ``clean()`` logic. ``BaseModel`` closes that gap.
+
+.. code:: python
+
+    from django_seriously.utils.models import BaseModel
+
+    class Article(BaseModel):
+        title = models.CharField(max_length=200)
+        # uuid pk, created_at, updated_at included
+        # full_clean() called automatically on every save()
+
+
+.. _MinimalUser:
 
 ``MinimalUser``
-===============
+~~~~~~~~~~~~~~~
+
+Django's ``AbstractUser`` ships with ``username``, ``first_name``, ``last_name``, and other fields that most modern apps don't need. ``MinimalAbstractUser`` strips that down to what you actually use.
+
+- Email-based authentication (no ``username`` field)
+- Supports passwordless user creation (magic links, SSO)
+- Drop-in ``MinimalUserAdmin`` included
 
 .. code:: python
 
@@ -172,8 +149,8 @@ Usage
     from django_seriously.minimaluser.models import MinimalAbstractUser
     from django_seriously.utils.models import BaseModel
 
-    # BaseModel is optional but adds useful uuid, created_at, updated_at
     class User(BaseModel, MinimalAbstractUser):
+        # Add your fields here
         pass
 
     # admin.py
@@ -184,9 +161,94 @@ Usage
         pass
 
 
+.. _AdminItemAction:
+
+``AdminItemAction``
+~~~~~~~~~~~~~~~~~~~
+
+Django admin's built-in actions apply to a selected batch of rows. ``AdminItemAction`` puts a context-aware action button directly on each row — and only shows it when the action makes sense for that item.
+
+.. code:: python
+
+    # admin.py
+    from django_seriously.utils.admin import AdminItemAction
+
+    class UserAdminAction(AdminItemAction[User]):
+        model_cls = User
+        actions = [("reset_invitation", "Reset Invitation")]
+
+        @classmethod
+        def is_actionable(cls, obj: User, action: str) -> bool:
+            if action == "reset_invitation":
+                return obj.invitation_pending
+            return False
+
+        def perform_action(self, obj: User, action: str) -> None:
+            if action == "reset_invitation":
+                send_invitation(obj)  # your code
+
+    @admin.register(User)
+    class UserAdmin(ModelAdmin):
+        list_display = (..., "admin_actions")
+
+        def admin_actions(self, obj: User):
+            return UserAdminAction.action_markup(obj)
+
+.. code:: python
+
+    # urls.py — item actions must precede regular admin endpoints
+    urlpatterns = [
+        path("admin/", AdminItemAction.urls()),
+        path("admin/", admin.site.urls),
+    ]
+
+
+.. _admin_navigation_link:
+
+``admin_navigation_link``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Click through from any list view to a related model's change page — one line of code.
+
+.. code:: python
+
+    from django_seriously.utils.admin import admin_navigation_link
+
+    @admin.register(Article)
+    class ArticleAdmin(ModelAdmin):
+        list_display = ('id', 'title', 'author_link')
+
+        def author_link(self, obj: Article):
+            return admin_navigation_link(obj.author, label=obj.author.email)
+
+
+Demo
+----
+
+``AdminItemAction``, ``admin_navigation_link``, ``MinimalUser``, and ``TokenAuthentication`` in action:
+
+.. image:: https://github.com/tfranzel/django-seriously/blob/master/docs/demo.gif
+
+
+Requirements
+------------
+
+- Python >= 3.12
+- Django >= 4.2
+- Pydantic >= 2.0
+- Django REST Framework (optional)
+
+
+License
+-------
+
+Provided by `T. Franzel <https://github.com/tfranzel>`_, `Licensed under 3-Clause BSD <https://github.com/tfranzel/django-seriously/blob/master/LICENSE>`_.
+
+
 .. _Django: https://www.djangoproject.com/
 .. _Django REST framework: https://www.django-rest-framework.org/
 .. _django-rest-knox: https://github.com/James1345/django-rest-knox
+.. _drf-spectacular: https://github.com/tfranzel/drf-spectacular
 
 .. |pypi-version| image:: https://img.shields.io/pypi/v/django-seriously.svg
    :target: https://pypi.python.org/pypi/django-seriously
