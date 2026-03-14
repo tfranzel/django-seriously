@@ -27,7 +27,6 @@ jobs:
         UV_PUBLISH_TOKEN: ${{ secrets.PYPI_PASSWORD }}
       run: |
         uv publish
-        twine upload dist/*
 
     - name: Tag
       run: |
