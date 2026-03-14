@@ -1,7 +1,8 @@
 import base64
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, TypeVar
 
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils import timezone
@@ -14,6 +15,8 @@ from django_seriously.settings import seriously_settings
 
 if TYPE_CHECKING:
     from django_seriously.authtoken.models import Token
+
+UserType = TypeVar("UserType", bound=AbstractBaseUser)
 
 
 class TokenAuthentication(BaseAuthentication):
@@ -48,14 +51,13 @@ class TokenAuthentication(BaseAuthentication):
         try:
             token_str = auth[1].decode()
         except UnicodeError:
-            msg = _(
-                "Invalid token header. Token string should not contain invalid characters."
-            )
+            msg = _("Invalid token header. Token string should not contain invalid characters.")
             raise exceptions.AuthenticationFailed(msg)
 
         return self.authenticate_credentials(token_str)
 
-    def authenticate_credentials(self, token_str):
+    def authenticate_credentials(self, token_str: str) -> tuple[UserType, "Token"]:
+        """ """
         try:
             token_bytes = base64.urlsafe_b64decode(token_str)
             if len(token_bytes) != 32:
@@ -99,7 +101,7 @@ class TokenAuthentication(BaseAuthentication):
 class TokenHasScope(BasePermission):
     """Derived from django-oauth-toolkit's TokenHasScope"""
 
-    def has_permission(self, request, view):
+    def has_permission(self, request, view) -> bool:
         token: Optional["Token"] = request.auth
 
         if not token:

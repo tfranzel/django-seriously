@@ -22,9 +22,9 @@ class TokenAdmin(ModelAdmin):
             token = generate_token()
             self.message_user(
                 request=request,
-                message=_(
-                    'New bearer token is "{}". This can only be viewed once!'
-                ).format(token.encoded_bearer),
+                message=_('New bearer token is "{}". This can only be viewed once!').format(
+                    token.encoded_bearer
+                ),
                 level=messages.WARNING,
             )
             obj.id = token.id

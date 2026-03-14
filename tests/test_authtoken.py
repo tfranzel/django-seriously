@@ -18,6 +18,7 @@ from django_seriously.authtoken.utils import TokenContainer, generate_token
 
 
 class TestAPIView(APIView):
+    __test__ = False
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
 
@@ -26,6 +27,7 @@ class TestAPIView(APIView):
 
 
 class TestAPIScopedView(APIView):
+    __test__ = False
     permission_classes = [TokenHasScope]
     authentication_classes = [TokenAuthentication]
     required_scopes = ["test-scope1"]
@@ -40,7 +42,7 @@ urlpatterns = [
 ]
 
 
-def gen_token() -> tuple[Token, TokenContainer]:
+def gen_token() -> Tuple[Token, TokenContainer]:
     token_container = generate_token()
     token = Token.objects.create(
         id=token_container.id,
@@ -59,9 +61,7 @@ def test_token_auth():
     response = APIClient().get("/u/")
     assert response.status_code == 401
 
-    response = APIClient().get(
-        "/u/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}"
-    )
+    response = APIClient().get("/u/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}")
     assert response.status_code == 200
 
 
@@ -102,18 +102,14 @@ def test_scoped_token_auth():
     assert response.status_code == 401
 
     # token is missing scope
-    response = APIClient().get(
-        "/s/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}"
-    )
+    response = APIClient().get("/s/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}")
     assert response.status_code == 403
 
     token.scopes = "test-scope1"
     token.save()
 
     # token has scope
-    response = APIClient().get(
-        "/s/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}"
-    )
+    response = APIClient().get("/s/", HTTP_AUTHORIZATION=f"Bearer {token_container.encoded_bearer}")
     assert response.status_code == 200
 
 
@@ -139,11 +135,15 @@ def test_token_rehash():
     def check_new_password_rehash(raw_password: str) -> bool:
         return not raw_password.startswith("pbkdf2_sha256$5000$")
 
-    with mock.patch(
-        "django_seriously.settings.seriously_settings.CHECK_PASSWORD_REHASH",
-        check_new_password_rehash,
-    ), mock.patch(
-        "django_seriously.settings.seriously_settings.MAKE_PASSWORD", make_new_password
+    with (
+        mock.patch(
+            "django_seriously.settings.seriously_settings.CHECK_PASSWORD_REHASH",
+            check_new_password_rehash,
+        ),
+        mock.patch(
+            "django_seriously.settings.seriously_settings.MAKE_PASSWORD",
+            make_new_password,
+        ),
     ):
         assert (
             APIClient()

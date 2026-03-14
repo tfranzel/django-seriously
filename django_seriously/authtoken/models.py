@@ -5,10 +5,10 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from django_seriously.settings import seriously_settings
-from django_seriously.utils.models import BaseModel
+from django_seriously.utils.models import DjangoBaseModel
 
 
-class Token(BaseModel):
+class Token(DjangoBaseModel):
     name = models.CharField(max_length=25, blank=True)
     key = models.CharField(_("Key"), max_length=128)
     user = models.ForeignKey(

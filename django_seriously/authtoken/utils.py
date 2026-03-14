@@ -46,9 +46,7 @@ def generate_token() -> TokenContainer:
 def make_password(password) -> str:
     """Default hasher function used by seriously_settings.MAKE_PASSWORD"""
     if not isinstance(password, (bytes, str)):
-        raise TypeError(
-            f"Password must be a string or bytes, got {type(password).__qualname__}."
-        )
+        raise TypeError(f"Password must be a string or bytes, got {type(password).__qualname__}.")
     hasher = get_hasher("pbkdf2_sha256")
     return hasher.encode(password, hasher.salt(), iterations=1_000)  # type: ignore
 

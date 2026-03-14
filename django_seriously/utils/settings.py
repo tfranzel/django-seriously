@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Set
 from django.utils.module_loading import import_string
 
 
-def perform_import(val):
+def perform_import(val: Any) -> Any:
     if val is None:
         return None
     elif isinstance(val, str):
@@ -52,7 +52,7 @@ class AppSettings:
         setattr(self, attr, val)
         return val
 
-    def reload(self):
+    def reload(self) -> None:
         for attr in self._cached_attrs:
             delattr(self, attr)
         self._cached_attrs.clear()

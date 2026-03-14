@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Generic, Optional, Type, TypeVar, Union
+from typing import Any, Generic, List, Optional, Type, TypeVar, Union
 
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin
@@ -30,8 +30,8 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
     convenience view for having a context sensitive button per item in the admin list view.
     """
 
-    _registry: list[Type["AdminItemAction"]] = []
-    model_cls: Type[_T]
+    _registry: List[Type["AdminItemAction"]] = []
+    model_cls: _T
     successful_message = _("Action completed successfully")
     error_message = _("Action failed: {}")
     actions = [
@@ -45,7 +45,7 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
     def post(self, request, id: str, action: str):
         try:
             # try to obtain referenced model object
-            obj = self.model_cls.objects.get(id=id)
+            obj = self.model_cls.objects.get(id=id)  # type: ignore
             # see if object is still actionable (might have changed in the meantime)
             with transaction.atomic():
                 if not self.is_actionable(obj, action):
@@ -116,7 +116,7 @@ class AdminItemAction(AdminRequiredMixin, View, Generic[_T], metaclass=abc.ABCMe
         """returns a urlpattern for registration in settings"""
         return path(
             route=(
-                f"{cls.model_cls._meta.app_label}/{cls.model_cls.__name__.lower()}/"
+                f"{cls.model_cls._meta.app_label}/{cls.model_cls.__name__.lower()}/"  # type: ignore[attr-defined]
                 f"<uuid:id>/{cls.__name__.lower()}/<str:action>/"
             ),
             view=cls.as_view(),

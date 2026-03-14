@@ -39,12 +39,8 @@ class UserCreationForm(DjangoUserCreationForm):
                 self.add_error("password2", error)
         elif self.cleaned_data.get("no_password"):
             if self.cleaned_data.get("password1") or self.cleaned_data.get("password2"):
-                self.add_error(
-                    "password1", _("Cannot set password when no password is requested")
-                )
-                self.add_error(
-                    "password2", _("Cannot set password when no password is requested")
-                )
+                self.add_error("password1", _("Cannot set password when no password is requested"))
+                self.add_error("password2", _("Cannot set password when no password is requested"))
         else:
             for f in ["no_password", "password1", "password2"]:
                 self.add_error(f, _("Either password or flag must be set"))

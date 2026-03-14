@@ -3,13 +3,12 @@ from django.core import exceptions
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from django_seriously.utils.models import BaseModel
+from django_seriously.utils.models import DjangoBaseModel
 
 
-class TestModel(BaseModel):
-    field = models.IntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(100)]
-    )
+class TestModel(DjangoBaseModel):
+    __test__ = False
+    field = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
 
 
 @pytest.mark.django_db
