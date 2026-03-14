@@ -1,8 +1,8 @@
 import base64
-import os
 import uuid
 
 from django.contrib.auth.hashers import get_hasher
+from django.utils.crypto import get_random_string
 
 from django_seriously.settings import seriously_settings
 
@@ -33,8 +33,8 @@ class TokenContainer:
 
 def generate_token() -> TokenContainer:
     token_id = uuid.uuid4()
-    secret = os.urandom(16)
-    raw_bearer_token = token_id.bytes + secret
+    secret = get_random_string(16)
+    raw_bearer_token = token_id.bytes + secret.encode()
     return TokenContainer(
         id=token_id,
         key=seriously_settings.MAKE_PASSWORD(secret),

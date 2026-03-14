@@ -1,12 +1,14 @@
 import base64
 import os
 import uuid
+from typing import Tuple
 from unittest import mock
 
 import pytest
 from django.contrib.auth.hashers import get_hasher
 from django.contrib.auth.models import User
 from django.urls import path
+from django.utils.crypto import get_random_string
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -81,8 +83,8 @@ def test_unknown_token():
 @pytest.mark.django_db
 def test_known_id_invalid_secret():
     _, token_container = gen_token()
-    secret = os.urandom(16)
-    raw_bearer_token = token_container.id.bytes + secret
+    secret = get_random_string(16)
+    raw_bearer_token = token_container.id.bytes + secret.encode()
     bearer = base64.urlsafe_b64encode(raw_bearer_token).decode()
 
     response = APIClient().get("/u/", HTTP_AUTHORIZATION=f"Bearer {bearer}")
