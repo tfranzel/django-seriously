@@ -19,7 +19,7 @@ What's in the box
 
 - `PydanticJSONField`_ — typed, validated JSON fields backed by Pydantic
 - `TokenAuthentication`_ — secure, scoped API tokens without the OAuth2 overhead
-- `BaseModel`_ — UUID PKs, timestamps, and guaranteed validation on every save
+- `DjangoBaseModel`_ — UUID PKs, timestamps, and guaranteed validation on every save
 - `MinimalUser`_ — email-only user model without the cruft
 - `AdminItemAction`_ — per-row action buttons in Django admin list views
 - `admin_navigation_link`_ — clickable links between related models in admin
@@ -79,10 +79,16 @@ When dealing with OAuth2 is overkill, DRF's built-in token is just horrible, and
 - Bearer token format: ``base64(uuid + random_secret)`` — UUID for **fast** DB lookup, secret for verification
 - Optional: Scopes
 
+**Installation:**
+
+- Basic: Just add `"django_seriously.authtoken"` to INSTALLED_APPS
+- Extend: Subclass and extend `django_seriously.authtoken.model.Token`, as well as `django_seriously.authtoken.admin.TokenAdmin`.
+
 **Simple usage** (just authentication, no scopes):
 
 .. code:: python
 
+    from rest_framework.permissions import IsAuthenticated
     from django_seriously.authtoken.authentication import TokenAuthentication
 
     class ReportsViewSet(viewsets.ModelViewSet):
@@ -109,9 +115,9 @@ When dealing with OAuth2 is overkill, DRF's built-in token is just horrible, and
 **Admin integration:** tokens are shown once at creation (copy/paste), then stored only as hashes — just like a good secret manager.
 
 
-.. _BaseModel:
+.. _DjangoBaseModel:
 
-``BaseModel``
+``DjangoBaseModel``
 ~~~~~~~~~~~~~
 
 The abstract base model you define in every new project, done properly.
@@ -120,13 +126,13 @@ The abstract base model you define in every new project, done properly.
 - **Automatic timestamps** — immutable ``created_at``, auto-updating ``updated_at``
 - **Validation always runs** — overrides ``save()`` to call ``full_clean()`` every time, not just through forms/admin
 
-That last point matters: Django only runs model validation in forms and the admin by default. Direct ``.save()`` calls silently skip your ``clean()`` logic. ``BaseModel`` closes that gap.
+That last point matters: Django only runs model validation in forms and the admin by default. Direct ``.save()`` calls silently skip your ``clean()`` logic. ``DjangoBaseModel`` closes that gap.
 
 .. code:: python
 
-    from django_seriously.utils.models import BaseModel
+    from django_seriously.utils.models import DjangoBaseModel
 
-    class Article(BaseModel):
+    class Article(DjangoBaseModel):
         title = models.CharField(max_length=200)
         # uuid pk, created_at, updated_at included
         # full_clean() called automatically on every save()
@@ -147,14 +153,17 @@ Django's ``AbstractUser`` ships with ``username``, ``first_name``, ``last_name``
 
     # models.py
     from django_seriously.minimaluser.models import MinimalAbstractUser
-    from django_seriously.utils.models import BaseModel
+    from django_seriously.utils.models import DjangoBaseModel
 
-    class User(BaseModel, MinimalAbstractUser):
+    class User(DjangoBaseModel, MinimalAbstractUser):
         # Add your fields here
         pass
 
     # admin.py
     from django_seriously.minimaluser.admin import MinimalUserAdmin
+
+    # settings.py
+    AUTH_USER_MODEL = "REPLACEYOURAPP.User"
 
     @admin.register(User)
     class UserAdmin(MinimalUserAdmin):
