@@ -1,6 +1,6 @@
 [project]
 name = "django-seriously"
-version = "0.5.0"
+version = "0.5.1"
 description = "Opinionated collection of Django and DRF tools that came in handy time and again."
 readme = "README.rst"
 authors = [
@@ -76,5 +76,5 @@ strict_model_abstract_attrs = false
 module-root = ""
 
 [build-system]
-requires = ["uv_build>=0.10.9,<0.11.0"]
+requires = ["uv_build>=0.10.9,<0.11.28"]
 build-backend = "uv_build"
