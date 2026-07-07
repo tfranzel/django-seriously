@@ -118,7 +118,7 @@ When dealing with OAuth2 is overkill, DRF's built-in token is just horrible, and
 .. _DjangoBaseModel:
 
 ``DjangoBaseModel``
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 The abstract base model you define in every new project, done properly.
 
