@@ -128,3 +128,24 @@ def test_pydantic_assumptions():
     with pytest.raises(pydantic.ValidationError):
         xs = XStrict(**get_x_instance())
         xs.d = ["1,2"]  # type: ignore
+
+
+def test_pydantic_field_createmigration():
+    """makemigrations on a model with PydanticJSONField must produce valid output."""
+    from django.db import models
+    from django.db.migrations import Migration
+    from django.db.migrations.operations import CreateModel
+    from django.db.migrations.writer import MigrationWriter
+
+    migration = Migration("0001_initial", "tests")
+    migration.operations = [
+        CreateModel(
+            name="ExampleModel",
+            fields=[
+                ("id", models.AutoField(primary_key=True)),
+                ("data", PydanticJSONField(structure=X)),
+            ],
+        )
+    ]
+    # as_string() serializes the full migration file, exactly as makemigrations does.
+    MigrationWriter(migration).as_string()

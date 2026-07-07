@@ -2,6 +2,8 @@ from typing import Any
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.migrations.serializer import BaseSerializer
+from django.db.migrations.writer import MigrationWriter
 from pydantic import TypeAdapter
 
 from django_seriously.pydantic.forms import PydanticJSONFormField, ValidatedJSONFormField
@@ -83,3 +85,13 @@ class PydanticJSONField(ValidatedJSONField):
                 **kwargs,
             }
         )
+
+
+class TypeAdapterSerializer(BaseSerializer):
+    def serialize(self):
+        return self.value._type.__qualname__, {
+            f"from {self.value._type.__module__} import {self.value._type.__qualname__}"
+        }
+
+
+MigrationWriter.register_serializer(TypeAdapter, TypeAdapterSerializer)
